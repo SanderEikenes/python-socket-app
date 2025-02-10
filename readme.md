@@ -55,7 +55,7 @@ Example interaction:
 
 1. **Add a question**:
    ```bash
-   > ask "What is your favorite color?;Red;Blue;Green"
+   > ask What is your favorite color?;Red;Blue;Green
    Question submitted
    ```
 2. **List available questions:**:
