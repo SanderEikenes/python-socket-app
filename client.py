@@ -30,9 +30,26 @@ while True:
         try:
             client.settimeout(0.5)  # Prevent infinite blocking
             response = client.recv(1024).decode()
+            parts = response.split(';')
+            match parts[0]:
+                case "PROBLEMS":
+                    print(f"{parts[1]}: {parts[2]}")
+                case "PROBLEM":
+                    print(parts[2])
+                    print(f"1. {parts[3]}, Votes: {parts[4]}")
+                    print(f"2. {parts[5]}, Votes: {parts[6]}")
+                    print(f"3. {parts[7]}, Votes: {parts[8]}")
+                case "PROBLEM_CREATED":
+                    print(f"Problem created with ID: {parts[1]}")
+                case "VOTE_SUCCESS":
+                    print("Voted")
+                case "COMMANDS":
+                    for part in parts[1:]:
+                        print(part)
+                case "ERROR":
+                    print(parts[1])
             if not response:
                 break
-            print(response)
         except socket.timeout:
             break  # No more data, exit the loop
 

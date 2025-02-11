@@ -26,7 +26,7 @@ while True:
         parts = userMessage.split(';')
         match parts[0]:
             case "help":
-                client.send("Commands: bye, help, ask, list, get, vote".encode())
+                client.send("COMMANDS;ask;help;vote;get;list".encode())
             case "POST_PROBLEM":
                 if len(parts) == 5 and all(parts):
                     question = parts[1]
@@ -46,10 +46,10 @@ while True:
 
                     client.send(f"PROBLEM_CREATED;{questionId}".encode())
                 else:
-                    client.send("ERROR".encode())
+                    client.send("ERROR;INVALID_FORMAT".encode())
             case "GET_PROBLEMS":
                 if len(database) == 0:
-                    client.send("No questions available".encode())
+                    client.send("ERROR;NO_QUESTIONS".encode())
                 else:
                     for index, entry in enumerate(database):
                         question = entry['question']
