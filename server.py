@@ -23,23 +23,19 @@ while True:
     while True:
         userMessage = client.recv(1024).decode()
         print(userMessage)
-        match userMessage:
-            case "bye":
-                client.send("Goodbye".encode())
-                client.close()
-                break
+        parts = userMessage.split(';')
+        match parts[0]:
             case "help":
                 client.send("Commands: bye, help, ask, list, get, vote".encode())
-            case _ if userMessage.startswith("ask"):
-                parts = userMessage[4:].split(';')
-                if len(parts) == 4 and all(parts):
-                    question = parts[0]
-                    alternative1 = parts[1]
-                    alternative2 = parts[2]
-                    alternative3 = parts[3]
-
+            case "POST_PROBLEM":
+                if len(parts) == 5 and all(parts):
+                    question = parts[1]
+                    alternative1 = parts[2]
+                    alternative2 = parts[3]
+                    alternative3 = parts[4]
+                    questionId = len(database) + 1
                     new_entry = {
-                        "questionId": len(database) + 1,
+                        "questionId": questionId,
                         "question": question,
                         "alternatives": [{"alternative": alternative1, "votes": 0}, {"alternative": alternative2, "votes": 0}, {"alternative": alternative3, "votes": 0}]
                     }
@@ -48,42 +44,38 @@ while True:
                     with open(DATABASE_FILE, 'w') as file:
                         json.dump(database, file)
 
-                    client.send("Question submitted".encode())
+                    client.send(f"PROBLEM_CREATED;{questionId}".encode())
                 else:
-                    client.send("invalid format, it should look like this 'question;alternative1;alternative2;alternative3'".encode())
-            case "list":
+                    client.send("ERROR".encode())
+            case "GET_PROBLEMS":
                 if len(database) == 0:
                     client.send("No questions available".encode())
                 else:
                     for index, entry in enumerate(database):
                         question = entry['question']
                         questionId = entry['questionId']
-                        client.send(f'ID: {questionId} Problem: {question}'.encode())
+                        client.send(f'PROBLEMS;{questionId};{question}'.encode())
                         time.sleep(0.1)
-            case _ if userMessage.startswith("get"):
-                questionId = int(userMessage[4:])
+            case "GET_PROBLEM":
+                questionId = int(parts[1])
                 for entry in database:
                     if entry['questionId'] == questionId:
                         question = entry['question']
                         alternatives = entry['alternatives']
-                        client.send(f'Question: {question}'.encode())
-                        time.sleep(0.1)
-                        alternativeIndex = 1
+                        problem_text = f"PROBLEM;{questionId};{question}"
                         for alternative in alternatives:
                             alternativeText = alternative['alternative']
                             votes = alternative['votes']
-                            client.send(f'{alternativeIndex}: {alternativeText}. Votes: {votes}'.encode())
-                            alternativeIndex += 1
-                            time.sleep(0.1)
+                            problem_text += f";{alternativeText};{votes}"
+                        client.send(problem_text.encode())
                         break
                 else:
-                    client.send("Question not found".encode())
-            case _ if userMessage.startswith("vote"):
+                    client.send("ERROR".encode())
+            case "VOTE":
                 # Format: vote <questionId> <alternativeIndex>
-                parts = userMessage[5:].split(' ')
-                if len(parts) == 2:
-                    questionId = int(parts[0])
-                    alternativeIndex = int(parts[1])
+                if len(parts) == 3:
+                    questionId = int(parts[1])
+                    alternativeIndex = int(parts[2])
                     for entry in database:
                         if entry['questionId'] == questionId:
                             alternatives = entry['alternatives']
@@ -91,13 +83,13 @@ while True:
                                 alternatives[alternativeIndex - 1]['votes'] += 1
                                 with open(DATABASE_FILE, 'w') as file:
                                     json.dump(database, file)
-                                client.send("Vote submitted".encode())
+                                client.send(f"VOTE_SUCCESS;{questionId};{alternativeIndex}".encode())
                             else:
-                                client.send("Invalid alternative index".encode())
+                                client.send("ERROR;INVALID_INDEX".encode())
                             break
                     else:
-                        client.send("Question not found".encode())
+                        client.send("ERROR;QUESTION_NOT_FOUND".encode())
                 else:
-                    client.send("Invalid format. It should look like this 'vote <alternative>'".encode())
+                    client.send("ERROR;INVALID_FORMAT".encode())
             case _:
                 client.send("I don't understand".encode())        
