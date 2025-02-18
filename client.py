@@ -6,6 +6,8 @@ print(client.recv(1024).decode())
 lastQuestionChecked = 0
 while True:
     message = input('>')
+
+    # Handle the message command
     match message:
         case "post":
             problem = input('Enter the problem: ')
@@ -28,7 +30,7 @@ while True:
     # Read all incoming messages
     while True:
         try:
-            client.settimeout(0.5)  # Prevent infinite blocking
+            client.settimeout(0.5)
             response = client.recv(1024).decode()
             parts = response.split(';')
             match parts[0]:
@@ -51,6 +53,6 @@ while True:
             if not response:
                 break
         except socket.timeout:
-            break  # No more data, exit the loop
+            break
 
-    client.settimeout(None)  # Reset timeout to default (blocking)
+    client.settimeout(None)

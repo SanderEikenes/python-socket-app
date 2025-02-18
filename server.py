@@ -6,7 +6,7 @@ import time
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(('localhost', 4000))
 print('Server started')
-server.listen(5)
+server.listen()
 
 DATABASE_FILE = 'database.json'
 if os.path.exists(DATABASE_FILE) and os.path.getsize(DATABASE_FILE) > 0:
@@ -72,7 +72,6 @@ while True:
                 else:
                     client.send("ERROR".encode())
             case "VOTE":
-                # Format: vote <questionId> <alternativeIndex>
                 if len(parts) == 3:
                     questionId = int(parts[1])
                     alternativeIndex = int(parts[2])
